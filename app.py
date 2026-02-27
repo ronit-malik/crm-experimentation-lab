@@ -523,6 +523,7 @@ experiment_description = st.text_area(
 )
 
 st.subheader("Campaign Data")
+st.caption("Replace dummy data with your actual campaign data to run the analysis.")
 col_ctrl, col_var = st.columns(2)
 
 with col_ctrl:
