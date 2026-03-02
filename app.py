@@ -285,7 +285,10 @@ def verdict_card(
         color = "#C62828"
         bg = "#FFEBEE"
         status = "Control wins"
-        takeaway = f"Variant is <b>{abs(lift):.2%} lower</b> — Control is performing better here."
+        takeaway = (
+            f"Variant is <b>{abs(lift):.2%} lower</b> than the baseline — "
+            f"the Variant is performing worse; stick with Control."
+        )
     elif significant:
         emoji = "⚪"
         color = "#616161"
@@ -718,6 +721,10 @@ The app checks whether there's less than a 5% chance the difference happened by 
 
     with st.expander("Summarise Findings"):
         st.caption("Summary is generated via an AI model based on your experiment context and results.")
+        _total_audience = sample_a + sample_b
+        _rev_ctrl_rollout = _total_audience * cvr_result["rate_a"] * aov_result["mean_b"]
+        _rev_var_rollout = _total_audience * cvr_result["rate_b"] * aov_result["mean_b"]
+        _revenue_uplift = _rev_var_rollout - _rev_ctrl_rollout
         summary_context = (
             f"Sample sizes: Control {sample_a:,} sends, Variant {sample_b:,} sends.\n\n"
             f"Open Rate: Control {open_result['rate_a']:.2%} vs Variant {open_result['rate_b']:.2%}, "
@@ -732,6 +739,7 @@ The app checks whether there's less than a 5% chance the difference happened by 
             f"AOV: Control £{aov_result['mean_a']:.2f} vs Variant £{aov_result['mean_b']:.2f}, "
             f"lift {aov_result['lift']:+.2%}, p-value {fmt_p(aov_result['p_value'])}, "
             f"{'significant' if aov_result['p_value'] < 0.05 else 'not significant'}.\n"
+            f"Revenue Uplift (if rolled out to full audience): £{_revenue_uplift:+,.2f}\n"
         )
 
         if st.button("Generate Summary"):
@@ -774,6 +782,8 @@ The app checks whether there's less than a 5% chance the difference happened by 
                                         "Rules:\n"
                                         "- Use the exact numbers from the results provided — do not round or approximate.\n"
                                         "- Use plain language: 'real difference' not 'statistically significant', 'could be random' not 'not significant'.\n"
+                                        "- If a metric is significant but the lift is negative, you MUST declare the Control as the winner for that metric (the Variant is performing worse).\n"
+                                        "- Look at the Revenue Uplift figure. If it is negative, the 'Winner' section MUST state 'Control' and recommend against rolling out the Variant.\n"
                                         "- Write so that someone can copy the whole block into Slack or email and send it as-is.\n"
                                         "- Use GBP (£) for currency. Keep each bullet to 1–2 sentences.\n"
                                         "- Do NOT add a word count, disclaimer, or extra recommendation section.\n"
